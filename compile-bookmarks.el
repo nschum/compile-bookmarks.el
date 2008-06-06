@@ -25,6 +25,16 @@
 ;;
 ;;; Commentary:
 ;;
+;; compile-bookmarks.el allows you to bookmark your compile commands and retain
+;; them across sessions.
+;;
+;; When you enable the global `compile-bookmarks-mode', your bookmarks will be
+;; loaded from `compile-bm-save-file'.  If you quit emacs with the mode enabled,
+;; the bookmarks will be stored automatically.
+;;
+;; You can manage your bookmarks with `compile-bm-add', `compile-bm-remove' and
+;; `compile-bm-recompile', or use the "Compile" menu.
+;;
 ;;; Change Log:
 ;;
 ;;; Code:
