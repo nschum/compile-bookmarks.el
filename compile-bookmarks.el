@@ -41,7 +41,6 @@
   :group 'compile-bookmarks
   :type 'file)
 
-;;;###autoload
 (defvar compile-bookmarks-mode-map (make-sparse-keymap)
   "*Keymap used by `compile-bm-mode'.")
 (defvaralias 'compile-bm-mode-map 'compile-bookmarks-mode-map)
@@ -66,8 +65,12 @@
             ";;; End:\n")
     (write-file (expand-file-name compile-bm-save-file))))
 
-(defun compile-bm-load-list ()
-  "Load the previously saved bookmarks from `recentf-save-file'."
+(defun compile-bm-load-list (&optional force)
+  "Load the previously saved bookmarks from `recentf-save-file'.
+Unless optional argument FORCE is given, the command will fail if
+`compile-bm-list' already contains any values."
+  (when compile-bm-list
+    (error "Refusing to overwrite existing bookmarks"))
   (let ((file (expand-file-name compile-bm-save-file)))
     (when (file-readable-p file)
       (load-file file))))
@@ -133,6 +136,8 @@ menu), you will be able to execute that compilation from the menu."
              (add-hook 'kill-emacs-hook 'compile-bm-save-list)
              (compile-bm-update-menu))
     (compile-bm-save-list)
+    ;; delete list, so not to trigger overwrite warning when enabling again
+    (setq compile-bm-list nil)
     (remove-hook 'kill-emacs-hook 'compile-bm-save-list)))
 
 (defalias 'compile-bm-mode 'compile-bookmarks-mode)
