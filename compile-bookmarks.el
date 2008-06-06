@@ -170,5 +170,18 @@ menu), you will be able to execute that compilation from the menu."
   (compile-bm-restore entry)
   (recompile))
 
+(defsubst compile-bm-swap (c)
+  (cons (cdr c) (car c)))
+
+(defun compile-bm-recompile ()
+  "Pick a compile bookmark and compile."
+  (interactive)
+  (let* ((swapped (mapcar 'compile-bm-swap compile-bm-list))
+         (history (mapcar 'cdr compile-bm-list)))
+    (compile-bm-restore-and-compile
+     (compile-bm-swap
+      (assoc (completing-read "Compile: " swapped nil t nil 'history)
+             swapped)))))
+
 (provide 'compile-bookmarks)
 ;;; compile-bookmarks.el ends here
