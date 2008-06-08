@@ -3,7 +3,7 @@
 ;; Copyright (C) 2008 Nikolaj Schumacher
 ;;
 ;; Author: Nikolaj Schumacher <bugs * nschum de>
-;; Version: 
+;; Version: 0.1
 ;; Keywords: tools, processes
 ;; URL: http://nschum.de/src/emacs/compile-bookmarks/
 ;; Compatibility: GNU Emacs 22.x
@@ -36,6 +36,9 @@
 ;; `compile-bm-recompile', or use the "Compile" menu.
 ;;
 ;;; Change Log:
+;;
+;; 2008-06-09 (0.1)
+;;    Initial release.
 ;;
 ;;; Code:
 
