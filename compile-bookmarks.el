@@ -37,6 +37,7 @@
 ;;
 ;;; Change Log:
 ;;
+;;    Fixed force argument in `compile-bm-load-list'.
 ;;    Added Storing and recovering of last active compile command.
 ;;
 ;; 2008-06-09 (0.1)
@@ -90,8 +91,8 @@
   "Load the previously saved bookmarks from `recentf-save-file'.
 Unless optional argument FORCE is given, the command will fail if
 `compile-bm-list' already contains any values."
-  (when compile-bm-list
-    (error "Refusing to overwrite existing bookmarks"))
+  (and compile-bm-list (not force)
+       (error "Refusing to overwrite existing bookmarks"))
   (let ((file (expand-file-name compile-bm-save-file))
         compile-bm-directory compile-bm-command)
     (when (file-readable-p file)
