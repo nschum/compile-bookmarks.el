@@ -103,27 +103,35 @@ Unless optional argument FORCE is given, the command will fail if
       (when compile-bm-command
         (setq compile-command compile-bm-command)))))
 
-(defun compile-bm-add (&optional name)
+(defsubst compile-bm-lookup (directory command)
+  (assoc (cons directory command) compile-bm-list))
+
+(defun compile-bm-suggest-name (directory command)
+  (concat
+   (mapconcat 'identity (last (split-string directory "/" t) 2) "/")
+   " | "
+   (if (> (length command) 40)
+       (concat "..." (substring command -37))
+     command)))
+
+(defsubst compile-bm-read-name (directory command)
+  (read-from-minibuffer "Name: "
+                        (or (cdr (compile-bm-lookup directory command))
+                            (compile-bm-suggest-name directory command))))
+
+(defun compile-bm-add (directory command name)
   "Add the current `compile-command' to the saved command list."
-  (interactive)
-  (let* ((pair (cons compilation-directory compile-command))
-         (entry (assoc pair compile-bm-list)))
-    (unless name
-      (setq name (or (cdr entry)
-                     (compile-bm-make-name compilation-directory
-                                           compile-command))))
-  (when (interactive-p)
-    (setq name (read-from-minibuffer "name: " name)))
-  (if (assoc pair compile-bm-list)
-      (when name
-        (setcdr entry name))
-    (push (cons pair (or name
-                         (compile-bm-make-name compilation-directory
-                                               compile-command)))
-          compile-bm-list))
+  (interactive (list compilation-directory compile-command
+                     (compile-bm-read-name compilation-directory
+                                           compile-command)))
+  (let ((pair (cons compilation-directory compile-command))
+        (entry (compile-bm-lookup compilation-directory compile-command)))
+    (if entry
+        (setcdr entry name)
+      (push (cons pair name) compile-bm-list)))
   (setq compile-bm-list
         (sort compile-bm-list (lambda (a b) (string< (cdr a) (cdr b)))))
-  (compile-bm-update-menu)))
+  (compile-bm-update-menu))
 
 (defun compile-bm-make-menu-entry (entry)
   (vector
@@ -140,15 +148,13 @@ Unless optional argument FORCE is given, the command will fail if
       ,@(mapcar 'compile-bm-make-menu-entry compile-bm-list)
       "-"
       ["Rename" compile-bm-add
-       :visible (assoc (cons compilation-directory compile-command)
-                       compile-bm-list)]
+       :visible (compile-bm-lookup compilation-directory compile-command)]
       ["Remove" compile-bm-remove
-       :visible (assoc (cons compilation-directory compile-command)
-                       compile-bm-list)]
+       :visible (compile-bm-lookup compilation-directory compile-command)]
       ["Add" compile-bm-add
        :visible (and compilation-directory
-                     (not (assoc (cons compilation-directory compile-command)
-                                 compile-bm-list)))]
+                     (not (compile-bm-lookup compilation-directory
+                                             compile-command)))]
       ))
   (easy-menu-add compile-bm-menu))
 
@@ -174,18 +180,9 @@ menu), you will be able to execute that compilation from the menu."
   "Remove the current `compile-command' from the saved command list."
   (interactive)
   (setq compile-bm-list
-        (delete (assoc (cons compilation-directory compile-command)
-                       compile-bm-list)
+        (delete (compile-bm-lookup compilation-directory compile-command)
                 compile-bm-list))
   (compile-bm-update-menu))
-
-(defun compile-bm-make-name (directory command)
-  (concat
-   (mapconcat 'identity (last (split-string directory "/" t) 2) "/")
-   " | "
-   (if (> (length command) 40)
-       (concat "..." (substring command -37))
-     command)))
 
 (defun compile-bm-restore (entry)
   "Restore ENTRY from `compile-bm-list'."
