@@ -35,8 +35,16 @@
 ;; You can manage your bookmarks with `compile-bm-add', `compile-bm-remove' and
 ;; `compile-bm-recompile', or use the "Compile" menu.
 ;;
+;; Keys can be assigned to bookmarks as well.  All keybindings are added to
+;; `compile-bm-shortcut-map', which is bound to C-c <f8> by default.
+;; To change this prefix key, you can add the following to you .emacs:
+;;
+;; (define-key compile-bookmarks-mode-map (kbd "C-c <f5>")
+;;             compile-bm-shortcut-map)
+;;
 ;;; Change Log:
 ;;
+;;    Added keybinding for bookmarks.
 ;;    Fixed force argument in `compile-bm-load-list'.
 ;;    Added Storing and recovering of last active compile command.
 ;;
@@ -57,7 +65,13 @@
   :group 'compile-bookmarks
   :type 'file)
 
-(defvar compile-bookmarks-mode-map (make-sparse-keymap)
+(defvar compile-bm-shortcut-map (make-keymap)
+  "Keymap containing bookmarked compilation commands.")
+
+(defvar compile-bookmarks-mode-map
+  (let ((keymap (make-sparse-keymap)))
+    (define-key keymap (kbd "C-c <f8>") compile-bm-shortcut-map)
+    keymap)
   "*Keymap used by `compile-bm-mode'.")
 (defvaralias 'compile-bm-mode-map 'compile-bookmarks-mode-map)
 
@@ -97,6 +111,12 @@ Unless optional argument FORCE is given, the command will fail if
         compile-bm-directory compile-bm-command)
     (when (file-readable-p file)
       (load-file file))
+    (dolist (entry compile-bm-list)
+      (if (consp (cdr entry))
+          (compile-bm-assign-key (caar entry) (cdar entry)
+                                 (compile-bm-entry-char entry))
+        ;; convert old format
+        (setcdr entry (cons (cdr entry) nil))))
     (unless compilation-directory
       ;; no compilation command set, recover old one
       (setq compilation-directory compile-bm-directory)
@@ -108,6 +128,20 @@ Unless optional argument FORCE is given, the command will fail if
 
 (defsubst compile-bm-entry-name (entry)
   (cadr entry))
+
+(defsubst compile-bm-entry-char (entry)
+  (nth 2 entry))
+
+(defun compile-bm-assign-key (directory command char)
+  (when char
+    (define-key compile-bm-shortcut-map (vector char)
+      (when (and directory command)
+        `(lambda (arg)
+           (interactive "P")
+           (when arg (compile-bm-restore ,directory ,command))
+           (let ((compilation-directory ,directory)
+                 (compile-command ,command))
+             (recompile)))))))
 
 (defun compile-bm-suggest-name (directory command)
   (concat
@@ -123,27 +157,47 @@ Unless optional argument FORCE is given, the command will fail if
                              (compile-bm-lookup directory command))
                             (compile-bm-suggest-name directory command))))
 
-(defun compile-bm-add (directory command name)
+(defun compile-bm-add (directory command name &optional char)
   "Add the current `compile-command' to the saved command list."
   (interactive (list compilation-directory compile-command
                      (compile-bm-read-name compilation-directory
-                                           compile-command)))
+                                           compile-command)
+                     (let ((char (read-char-exclusive
+                                  "Character (ESC for none): ")))
+                       (when (/= char 27) char))))
   (let ((pair (cons compilation-directory compile-command))
-        (entry (compile-bm-lookup compilation-directory compile-command)))
+        (entry (compile-bm-lookup compilation-directory compile-command))
+        (metadata (list name char)))
     (if entry
-        (setcdr entry name)
-      (push (cons pair name) compile-bm-list)))
+        (progn
+          ;; remove old keybinding
+          (compile-bm-assign-key nil nil (compile-bm-entry-char entry))
+          (setcdr entry metadata))
+      (push (cons pair metadata) compile-bm-list)))
+  ;; add keybinding
+  (compile-bm-assign-key directory command char)
   (setq compile-bm-list
-        (sort compile-bm-list (lambda (a b) (string< (cdr a) (cdr b)))))
+        (sort compile-bm-list (lambda (a b)
+                                (string< (compile-bm-entry-name a)
+                                         (compile-bm-entry-name b)))))
   (compile-bm-update-menu))
 
 (defun compile-bm-make-menu-entry (entry)
-  (vector
-   (cdr entry)
-   `(compile-bm-restore-and-compile (quote ,entry))
-   :style 'toggle
-   :selected `(and (equal ,(caar entry) compilation-directory)
-                   (equal ,(cdar entry) compile-command))))
+  (let ((name (compile-bm-entry-name entry))
+        (char (compile-bm-entry-char entry)))
+    (when char
+      ;; show bound key
+      (setq name
+            (concat name "\t("
+                    (key-description
+                     (car (where-is-internal compile-bm-shortcut-map)))
+                    " " (string char) ")")))
+    (vector
+     name
+     `(compile-bm-restore-and-compile (quote ,entry))
+     :style 'toggle
+     :selected `(and (equal ,(caar entry) compilation-directory)
+                     (equal ,(cdar entry) compile-command)))))
 
 (defun compile-bm-update-menu ()
   (easy-menu-define compile-bm-menu compile-bm-mode-map
@@ -151,7 +205,7 @@ Unless optional argument FORCE is given, the command will fail if
     `("Compile"
       ,@(mapcar 'compile-bm-make-menu-entry compile-bm-list)
       "-"
-      ["Rename" compile-bm-add
+      ["Modify" compile-bm-add
        :visible (compile-bm-lookup compilation-directory compile-command)]
       ["Remove" compile-bm-remove
        :visible (compile-bm-lookup compilation-directory compile-command)]
