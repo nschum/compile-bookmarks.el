@@ -106,6 +106,9 @@ Unless optional argument FORCE is given, the command will fail if
 (defsubst compile-bm-lookup (directory command)
   (assoc (cons directory command) compile-bm-list))
 
+(defsubst compile-bm-entry-name (entry)
+  (cadr entry))
+
 (defun compile-bm-suggest-name (directory command)
   (concat
    (mapconcat 'identity (last (split-string directory "/" t) 2) "/")
@@ -116,7 +119,8 @@ Unless optional argument FORCE is given, the command will fail if
 
 (defsubst compile-bm-read-name (directory command)
   (read-from-minibuffer "Name: "
-                        (or (cdr (compile-bm-lookup directory command))
+                        (or (compile-bm-entry-name
+                             (compile-bm-lookup directory command))
                             (compile-bm-suggest-name directory command))))
 
 (defun compile-bm-add (directory command name)
