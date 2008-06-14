@@ -184,15 +184,15 @@ menu), you will be able to execute that compilation from the menu."
                 compile-bm-list))
   (compile-bm-update-menu))
 
-(defun compile-bm-restore (entry)
+(defun compile-bm-restore (directory command)
   "Restore ENTRY from `compile-bm-list'."
-  (setq compilation-directory (caar entry))
-  (setq compile-command (cdar entry))
+  (setq compilation-directory directory)
+  (setq compile-command command)
   (compile-bm-update-menu))
 
 (defun compile-bm-restore-and-compile (entry)
   "Restore ENTRY from `compile-bm-list' and compile."
-  (compile-bm-restore entry)
+  (compile-bm-restore (caar entry) (cdar entry))
   (recompile))
 
 (defsubst compile-bm-swap (c)
