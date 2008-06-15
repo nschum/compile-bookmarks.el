@@ -3,7 +3,7 @@
 ;; Copyright (C) 2008 Nikolaj Schumacher
 ;;
 ;; Author: Nikolaj Schumacher <bugs * nschum de>
-;; Version: 0.1
+;; Version: 0.2
 ;; Keywords: tools, processes
 ;; URL: http://nschum.de/src/emacs/compile-bookmarks/
 ;; Compatibility: GNU Emacs 22.x
@@ -44,6 +44,7 @@
 ;;
 ;;; Change Log:
 ;;
+;; 2008-06-15 (0.2)
 ;;    Added keybinding for bookmarks.
 ;;    Fixed force argument in `compile-bm-load-list'.
 ;;    Added Storing and recovering of last active compile command.
