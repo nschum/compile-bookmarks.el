@@ -61,7 +61,10 @@
   :group 'tools
   :group 'processes)
 
-(defcustom compile-bm-save-file "~/.compile-bm"
+(defcustom compile-bm-save-file
+  (if (fboundp 'locate-user-emacs-file)
+      (locate-user-emacs-file "compile-bookmarks" ".compile-bm")
+    "~/.compile-bm")
   "*File name for storing the compilation bookmarks"
   :group 'compile-bookmarks
   :type 'file)
