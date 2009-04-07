@@ -6,7 +6,7 @@
 ;; Version: 0.2
 ;; Keywords: tools, processes
 ;; URL: http://nschum.de/src/emacs/compile-bookmarks/
-;; Compatibility: GNU Emacs 22.x
+;; Compatibility: GNU Emacs 22.x, GNU Emacs 23.x
 ;;
 ;; This file is NOT part of GNU Emacs.
 ;;
